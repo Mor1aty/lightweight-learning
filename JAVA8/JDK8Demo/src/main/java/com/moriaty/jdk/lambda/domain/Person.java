@@ -19,4 +19,10 @@ public class Person {
     private String name;
     private Integer age;
     private Integer height;
+
+    public Person(String name, Integer age) {
+        this.name = name;
+        this.age = age;
+    }
+
 }

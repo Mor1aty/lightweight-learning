@@ -398,3 +398,673 @@ public class Demo04Lambda {
    1. **匿名内部类是在编译后形成一个 class**
    2. **Lambda 表达式是在程序运行的时候动态生成 class**
 
+# 二、接口中新增的方法
+
+## 2.1、JDK8 中接口的新增
+
+​	在 JDK8 中针对接口有增强，在 JDK8 之前
+
+```java
+interface 接口名 {
+    静态常量;
+    抽象方法;
+}
+```
+
+​	JDK8 之后对接口进行了增强，接口中可以有默认方法和静态方法。
+
+```java
+interface 接口名 {
+    静态常量;
+    抽象方法;
+    默认方法;
+    静态方法;
+}
+```
+
+## 2.2、默认方法
+
+### 2.2.1、为什么要增加默认方法
+
+​	在 JDK8 之前接口中只能有抽象方法和静态常量，会存在以下问题：
+​	如果接口中新增抽象方法，那么实现类都必须要重写这个抽象方法，非常不利于接口扩展。
+
+### 2.2.2、接口默认方法的使用方式
+
+​	接口中默认方法的语法是：
+
+```java
+interface 接口名 {
+    default 返回值类型 方法名(参数) {
+        方法体
+    }
+}
+```
+
+​	使用方法：
+
+1. 实现类直接调用接口的默认方法
+2. 实现类实现默认方法后调用
+
+## 2.3、静态方法
+
+​	JDK8 中为接口新增了静态方法，作用也是为了接口的扩展
+
+## 2.3.1、语法规则
+
+```java
+interface 接口名 {
+    static 返回值类型 方法名(参数) {
+        方法体
+    }
+}
+```
+
+### 2.3.2、使用
+
+​	接口中的静态方法在实现类中是不能被重写的，只能通过 接口名.静态方法名 调用。
+
+## 2.4、两者的区别
+
+1. 默认方法通过实例调用，静态方法通过接口名调用
+2. 默认方法可以被继承，实现类可以直接调用接口默认方法，也可以重写默认方法
+3. 静态方法不能被继承，实现类不能重写接口的静态方法，只能使用接口名调用
+
+# 三、函数式接口
+
+## 3.1、函数式接口的由来
+
+​	使用 Lambda 表达式的前提是需要有函数式接口，而 Lambda 表达式使用时不关心接口名，抽象方法名。只关心抽象方法的参数列表和返回值类型。所以 JDK 提供了大量常用的函数式接口。
+
+## 3.2、函数式接口介绍
+
+​	在 JDK 中提供的函数式接口，主要在 java.util.function 包中。
+
+### 3.2.1、Supplier
+
+​	生产数据。
+
+​	无参有返回值的接口，对于 Lambda 表达式需要提供一个返回数据的类型。
+
+```java
+@FunctionalInterface
+public interface Supplier<T> {
+
+    /**
+     * Gets a result.
+     *
+     * @return a result
+     */
+    T get();
+}
+```
+
+​	使用：
+
+```java
+public class SupplierTest {
+
+    public static void main(String[] args) {
+        func1(() -> {
+            int[] arr = {22, 33, 44, 55, 1, 2, 909, 2100};
+            // 计算出数组中的最大值
+            Arrays.sort(arr);
+            return arr[arr.length - 1];
+        });
+    }
+
+    private static void func1(Supplier<Integer> supplier) {
+        // get 是一个无参数有返回值的抽象方法
+        Integer max = supplier.get();
+        System.out.println("max = " + max);
+    }
+}
+```
+
+
+
+### 3.2.2、Consumer
+
+​	消费数据。
+
+```java
+@FunctionalInterface
+public interface Consumer<T> {
+
+    /**
+     * Performs this operation on the given argument.
+     *
+     * @param t the input argument
+     */
+    void accept(T t);
+
+    /**
+     * Returns a composed {@code Consumer} that performs, in sequence, this
+     * operation followed by the {@code after} operation. If performing either
+     * operation throws an exception, it is relayed to the caller of the
+     * composed operation.  If performing this operation throws an exception,
+     * the {@code after} operation will not be performed.
+     *
+     * @param after the operation to perform after this operation
+     * @return a composed {@code Consumer} that performs in sequence this
+     * operation followed by the {@code after} operation
+     * @throws NullPointerException if {@code after} is null
+     */
+    default Consumer<T> andThen(Consumer<? super T> after) {
+        Objects.requireNonNull(after);
+        return (T t) -> { accept(t); after.accept(t); };
+    }
+}
+
+```
+
+​	使用：将输入的数据统一转换为小写
+
+```java
+public class ConsumerTest {
+
+    public static void main(String[] args) {
+        test(msg -> {
+            System.out.println(msg + " -> " + msg.toLowerCase(Locale.ROOT));
+        });
+    }
+
+    public static void test(Consumer<String> consumer) {
+        consumer.accept("Hello World");
+    }
+}
+```
+
+​	默认方法：andThen
+
+​	如果一个方法的参数和返回值的类型都是 Consumer 时，那么可以通过 andThen 实现组合调用的效果。
+
+```java
+public class ConsumerTest {
+
+    public static void main(String[] args) {
+
+        test3(msg1 -> {
+            System.out.println(msg1 + " -> " + msg1.toLowerCase(Locale.ROOT));
+        }, msg2 -> {
+            System.out.println(msg2 + " -> " + msg2.toUpperCase(Locale.ROOT));
+        });
+    }
+
+    public static void test3(Consumer<String> c1, Consumer<String> c2) {
+        String str = "Hello World";
+        c1.andThen(c2).accept(str);
+    }
+}
+```
+
+
+
+### 3.2.3、Function
+
+​	有参数有返回值的类型，Function 接口是根据一个类型的数据得到另一个类型的数据，前者称为前置条件，后者称为后置条件。
+
+````java
+@FunctionalInterface
+public interface Function<T, R> {
+
+    /**
+     * Applies this function to the given argument.
+     *
+     * @param t the function argument
+     * @return the function result
+     */
+    R apply(T t);
+
+    /**
+     * Returns a composed function that first applies the {@code before}
+     * function to its input, and then applies this function to the result.
+     * If evaluation of either function throws an exception, it is relayed to
+     * the caller of the composed function.
+     *
+     * @param <V> the type of input to the {@code before} function, and to the
+     *           composed function
+     * @param before the function to apply before this function is applied
+     * @return a composed function that first applies the {@code before}
+     * function and then applies this function
+     * @throws NullPointerException if before is null
+     *
+     * @see #andThen(Function)
+     */
+    default <V> Function<V, R> compose(Function<? super V, ? extends T> before) {
+        Objects.requireNonNull(before);
+        return (V v) -> apply(before.apply(v));
+    }
+
+    /**
+     * Returns a composed function that first applies this function to
+     * its input, and then applies the {@code after} function to the result.
+     * If evaluation of either function throws an exception, it is relayed to
+     * the caller of the composed function.
+     *
+     * @param <V> the type of output of the {@code after} function, and of the
+     *           composed function
+     * @param after the function to apply after this function is applied
+     * @return a composed function that first applies this function and then
+     * applies the {@code after} function
+     * @throws NullPointerException if after is null
+     *
+     * @see #compose(Function)
+     */
+    default <V> Function<T, V> andThen(Function<? super R, ? extends V> after) {
+        Objects.requireNonNull(after);
+        return (T t) -> after.apply(apply(t));
+    }
+
+    /**
+     * Returns a function that always returns its input argument.
+     *
+     * @param <T> the type of the input and output objects to the function
+     * @return a function that always returns its input argument
+     */
+    static <T> Function<T, T> identity() {
+        return t -> t;
+    }
+}
+````
+
+​	使用方法：
+
+```java
+public class FunctionTest {
+    public static void main(String[] args) {
+        test(msg -> {
+            return Integer.parseInt(msg)
+        });
+    }
+
+    public static void test(Function<String, Integer> function) {
+        Integer apply = function.apply("666");
+        System.out.println("apply = " + apply);
+    }
+}
+```
+
+​	默认方法：andThen，也是用来进行组合操作。compose，作用和 andThen 一致，顺序正好相反。
+
+​	静态方法：identity 输入什么返回什么。
+
+### 3.2.4、Predicate
+
+```java
+@FunctionalInterface
+public interface Predicate<T> {
+
+    /**
+     * Evaluates this predicate on the given argument.
+     *
+     * @param t the input argument
+     * @return {@code true} if the input argument matches the predicate,
+     * otherwise {@code false}
+     */
+    boolean test(T t);
+
+    /**
+     * Returns a composed predicate that represents a short-circuiting logical
+     * AND of this predicate and another.  When evaluating the composed
+     * predicate, if this predicate is {@code false}, then the {@code other}
+     * predicate is not evaluated.
+     *
+     * <p>Any exceptions thrown during evaluation of either predicate are relayed
+     * to the caller; if evaluation of this predicate throws an exception, the
+     * {@code other} predicate will not be evaluated.
+     *
+     * @param other a predicate that will be logically-ANDed with this
+     *              predicate
+     * @return a composed predicate that represents the short-circuiting logical
+     * AND of this predicate and the {@code other} predicate
+     * @throws NullPointerException if other is null
+     */
+    default Predicate<T> and(Predicate<? super T> other) {
+        Objects.requireNonNull(other);
+        return (t) -> test(t) && other.test(t);
+    }
+
+    /**
+     * Returns a predicate that represents the logical negation of this
+     * predicate.
+     *
+     * @return a predicate that represents the logical negation of this
+     * predicate
+     */
+    default Predicate<T> negate() {
+        return (t) -> !test(t);
+    }
+
+    /**
+     * Returns a composed predicate that represents a short-circuiting logical
+     * OR of this predicate and another.  When evaluating the composed
+     * predicate, if this predicate is {@code true}, then the {@code other}
+     * predicate is not evaluated.
+     *
+     * <p>Any exceptions thrown during evaluation of either predicate are relayed
+     * to the caller; if evaluation of this predicate throws an exception, the
+     * {@code other} predicate will not be evaluated.
+     *
+     * @param other a predicate that will be logically-ORed with this
+     *              predicate
+     * @return a composed predicate that represents the short-circuiting logical
+     * OR of this predicate and the {@code other} predicate
+     * @throws NullPointerException if other is null
+     */
+    default Predicate<T> or(Predicate<? super T> other) {
+        Objects.requireNonNull(other);
+        return (t) -> test(t) || other.test(t);
+    }
+
+    /**
+     * Returns a predicate that tests if two arguments are equal according
+     * to {@link Objects#equals(Object, Object)}.
+     *
+     * @param <T> the type of arguments to the predicate
+     * @param targetRef the object reference with which to compare for equality,
+     *               which may be {@code null}
+     * @return a predicate that tests if two arguments are equal according
+     * to {@link Objects#equals(Object, Object)}
+     */
+    static <T> Predicate<T> isEqual(Object targetRef) {
+        return (null == targetRef)
+                ? Objects::isNull
+                : object -> targetRef.equals(object);
+    }
+}
+```
+
+​	使用方法：
+
+```java
+public class PredicateTest {
+    public static void main(String[] args) {
+        test(msg -> {
+            return msg.length() > 3;
+        }, "a");
+    }
+
+    private static void test(Predicate<String> predicate, String msg) {
+        boolean b = predicate.test(msg);
+        System.out.println("b = " + b);
+    }
+}
+```
+
+​	在 Predicate 中的默认方法提供了逻辑关系操作：and，or，negate，isEqual。
+
+```java
+public class PredicateTest {
+    public static void main(String[] args) {
+        
+        test2(msg1 -> {
+            return msg1.contains("H");
+        }, msg2 -> {
+            return msg2.contains("W");
+        });
+    }
+
+    private static void test2(Predicate<String> p1, Predicate<String> p2) {
+        boolean b1 = p1.and(p2).test("Hello");
+        boolean b2 = p1.or(p2).test("Hello");
+        boolean b3 = p1.negate().test("Hello");
+        System.out.println(b1);
+        System.out.println(b2);
+        System.out.println(b3);
+    }
+}
+```
+
+# 四、方法引用
+
+ ## 4.1、为什么要使用方法引用
+
+### 4.1.1、Lambda 表达式冗余
+
+​	在使用 Lambda 表达式之后也会出现代码冗余的情况。比如：用 Lambda 表达式求一个数组的和。
+
+```java
+public class FunctionRefTest01 {
+    public static void main(String[] args) {
+        printMax(a -> {
+            // Lambda 表达式中的代码和 getTotal 代码冗余
+            int sum = 0;
+            for (int i : a) {
+                sum += i;
+            }
+            System.out.println("sum = " + sum);
+        });
+    }
+
+    public static void getTotal(int[] a) {
+        int sum = 0;
+        for (int i : a) {
+            sum += i;
+        }
+        System.out.println("sum = " + sum);
+    }
+
+    private static void printMax(Consumer<int[]> consumer) {
+        int[] arr = {10, 20, 30, 40, 50, 60};
+        consumer.accept(arr);
+    }
+}
+```
+
+### 4.1.2、解决方法
+
+```java
+public class FunctionRefTest01 {
+    public static void main(String[] args) {
+        // :: 方法引用
+        printSum(FunctionRefTest01::getTotal);
+    }
+
+    public static void getTotal(int[] a) {
+        int sum = 0;
+        for (int i : a) {
+            sum += i;
+        }
+        System.out.println("sum = " + sum);
+    }
+
+    private static void printSum(Consumer<int[]> consumer) {
+        int[] arr = {10, 20, 30, 40, 50, 60};
+        consumer.accept(arr);
+    }
+}
+```
+
+## 4.2、方法引用格式
+
+​	符号表示：`::`
+
+​	符号说明：双冒号为方法引用运算符，而它所在的表达式成为方法引用
+
+​	应用场景：如果 Lambda 表达式所需要实现的方案，已经有其他方法存在相同的方案，那么可以使用方法引用。
+
+​	常见的引用方式：
+
+​	方法引用在 JDK8 中是相当灵活的，有以下几种形式：
+
+1. 对象::方法名
+2. 类名::静态方法
+3. 类名::普通方法
+4. 类名:: new 调用的构造器
+5. 类名[]:: new 调用数组的构造器
+
+### 4.2.1、对象::方法名
+
+​	这是最常见的一种用法，如果一个类中已经存在了一个成员方法，则可以通过对象名引用成员方法。
+
+```java
+public class FunctionRefTest02 {
+    public static void main(String[] args) {
+        Date now = new Date();
+        Supplier<Long> supplier = () -> now.getTime();
+        System.out.println(supplier.get());
+
+        // 通过方法引用使用
+        Supplier<Long> supplier1 = now::getTime;
+        System.out.println(supplier1.get());
+    }
+
+}
+```
+
+​	注意事项：
+
+1. 被引用的方法，参数要和接口中的抽象方法的参数一致
+2. 当接口抽象方法有返回值的时候，被引用的方法也必须有返回值
+
+### 4.2.2、类名::静态方法
+
+```java
+public class FunctionRefTest03 {
+    public static void main(String[] args) {
+        Supplier<Long> supplier = () -> {
+            return System.currentTimeMillis();
+        };
+        System.out.println(supplier.get());
+
+        // 通过方法引用实现
+        Supplier<Long> supplier1 = System::currentTimeMillis;
+        System.out.println(supplier1.get());
+
+    }
+}
+```
+
+
+
+### 4.2.3、类名::普通方法
+
+​	JAVA 面向对象中，类名只能调用静态方法，类名引用实例方法是用前提的，实际上是拿第一个参数做为方法的调用者。
+
+```java
+public class FunctionRefTest04 {
+    public static void main(String[] args) {
+        Function<String, Integer> function = (s) -> {
+            return s.length();
+        };
+        System.out.println(function.apply("Hello"));
+
+        // 通过方法引用来实现
+        Function<String, Integer> function1 = String::length;
+        System.out.println(function1.apply("Hello"));
+
+        BiFunction<String, Integer, String> function2 = String::substring;
+        System.out.println(function2.apply("HelloWorld", 3));
+    }
+
+}
+```
+
+
+
+### 4.2.4、类名::构造器
+
+​	由于构造器的名称和类名完全一致，所以可以使用 类名::new 使用。
+
+```java
+public class FunctionRefTest05 {
+    public static void main(String[] args) {
+        Supplier<Person> supplier = () -> {
+            return new Person();
+        };
+        System.out.println(supplier.get());
+
+        // 通过方法引用来实现
+        Supplier<Person> supplier1 = Person::new;
+        System.out.println(supplier1.get());
+
+        BiFunction<String, Integer, Person> function = Person::new;
+        System.out.println(function.apply("张三", 13));
+    }
+
+}
+```
+
+
+
+### 4.2.5、数组::构造器
+
+```java
+public class FunctionRefTest06 {
+    public static void main(String[] args) {
+        Function<Integer, String[]> function1 = (len) -> {
+            return new String[len];
+        };
+        System.out.println(function1.apply(4).length);
+
+        // 方法引用
+        Function<Integer, String[]> function2 = String[]::new;
+        System.out.println(function2.apply(10).length);
+    }
+
+}
+```
+
+## 4.3、小结
+
+​	方法引用是对 Lambda 表达式符合特定情况下的一种缩写形式，它使得我们的 Lambda 表达式更加精简，也可以理解为 Lambda 表达式的缩写形式。不过要注意方法引用只能引用已经存在的方法，
+
+# 五、Stream API
+
+## 5.1、集合处理数据的弊端
+
+​	当我们在需要对集合中的元素进行操作的时候，除了必须的添加，删除，获取以外，最典型的操作就是集合遍历。
+
+```java
+public class StreamTest1 {
+    public static void main(String[] args) {
+        List<String> list = Arrays.asList("张三", "李四", "王五无");
+
+        // 获取所有姓张的信息
+        List<String> list1 = new ArrayList<>();
+        for (String s : list) {
+            if (s.startsWith("张")) {
+                list1.add(s);
+            }
+        }
+
+        // 获取所有姓名长度为 3 的用户
+        List<String> list2 = new ArrayList<>();
+        for (String s : list) {
+            if (s.length() == 3) {
+                list2.add(s);
+            }
+        }
+
+        System.out.println(list1);
+        System.out.println(list2);
+    }
+}
+```
+
+​	一旦对集合的数据进行操作，就需要对集合进行循环。使用 Stream 更加优雅的解决。
+
+```java
+public class StreamTest2 {
+    public static void main(String[] args) {
+        List<String> list = Arrays.asList("张三风", "李四", "王五无");
+
+        // 获取所有姓张的信息
+        // 获取所有姓名长度为 3 的用户
+        list.stream()
+                .filter(s -> s.startsWith("张"))
+                .filter(s -> s.length() == 3)
+        .forEach(System.out::println);
+
+    }
+}
+```
+
+## 5.2、Stream 流式思想概述
+
+​	注意：Stream 和 IO 流（InputStream/OutputStream）没有任何关系。
+
+​	Stream 流式思想类似于工厂车间的“生产流水线”，Stream 流不是一种数据结构，不保存数据，而是对数据进行加工处理。Stream 可以看做是流水线上的一个工序。在流水线上，通过多个工序让一个原材料加工成一个商品。
+
+​	Stream API 能让我们快速完成许多复杂的操作，如筛选、切片、映射、查找、去重、统计、匹配和规约。

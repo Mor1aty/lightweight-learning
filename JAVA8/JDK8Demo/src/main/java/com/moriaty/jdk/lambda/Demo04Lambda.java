@@ -16,7 +16,7 @@ public class Demo04Lambda {
 
     public static void main(String[] args) {
         goStudent((String name, Integer age) -> {
-            return name + age + " 666666";
+             return name + age + " 666666";
         });
 
         // 省略写法
