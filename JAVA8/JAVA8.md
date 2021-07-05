@@ -1068,3 +1068,342 @@ public class StreamTest2 {
 ​	Stream 流式思想类似于工厂车间的“生产流水线”，Stream 流不是一种数据结构，不保存数据，而是对数据进行加工处理。Stream 可以看做是流水线上的一个工序。在流水线上，通过多个工序让一个原材料加工成一个商品。
 
 ​	Stream API 能让我们快速完成许多复杂的操作，如筛选、切片、映射、查找、去重、统计、匹配和规约。
+
+## 5.3、Stream 流的获取方式
+
+### 5.3.1、根据 Collection 获取
+
+​	首先，Collection 加入了一个 default 方法：stream。也就是说 Collection 接口下的所有对象都可以使用 stream 来获取流。
+
+```java
+public static void main(String[] args) {
+        List<String> list = new ArrayList<>();
+        list.stream();
+        Set<String> set = new HashSet<>();
+        set.stream();
+        Vector<String> vector = new Vector<>();
+        vector.stream();
+    }
+```
+
+​	但是，Map 接口并没有实现 Collection 接口，此时可以根据 Map 获取对应的 key value 的集合。
+
+```java
+public static void main(String[] args) {
+        Map<String, Object> map = new HashMap<>();
+        map.keySet().stream();
+        map.values().stream();
+        map.entrySet().stream();
+    }
+```
+
+
+
+### 5.3.2、通过 Stream 的 of 方法
+
+​	在开发中会操作到数组中的数据，数组对象不可能添加默认方法，所有 Stream 接口中提供了静态方法 of。
+
+```java
+public class StreamTest5 {
+    public static void main(String[] args) {
+        Stream.of("a1", "a2", "a3");
+        String[] arr1 = {"aa", "bb", "cc"};
+        Stream<String> arr11 = Stream.of(arr1);
+        arr11.forEach(System.out::println);
+
+        Integer[] arr2 = {1, 2, 3, 4};
+        Stream<Integer> arr21 = Stream.of(arr2);
+        arr21.forEach(System.out::println);
+
+        // 注意：基本数据类型的数组是不行的
+        int[] arr3 = {1, 2, 3, 4};
+        Stream<int[]> arr31 = Stream.of(arr3);
+        arr31.forEach(System.out::println);
+    }
+}
+```
+
+## 5.4、Stream 常用方法介绍
+
+| 方法名  | 方法作用   | 返回值类型 | 方法种类 |
+| ------- | ---------- | ---------- | -------- |
+| count   | 统计个数   | long       | 终结     |
+| forEach | 逐一处理   | void       | 终结     |
+| filter  | 过滤       | Stream     | 函数拼接 |
+| limit   | 取用前几个 | Stream     | 函数拼接 |
+| skip    | 跳过前几个 | Stream     | 函数拼接 |
+| map     | 映射       | Stream     | 函数拼接 |
+| concat  | 组合       | Stream     | 函数拼接 |
+
+**终结方法：**返回值类型不再是 Stream 类型的方法，不再支持链式调用。终结方法包裹 count 和 forEach。
+
+**非终结方法：**返回值类型仍然是 Stream 类型的方法，支持链式调用。（除了终结方法外，其余都是非终结方法。）
+
+**Stream 注意：**
+
+1. Stream 只能操作一次
+2. Stream 方法返回是个新的流
+3. Stream 方法不调用终结方法，中间方法是不会调用的。
+
+### 5.4.1、forEach
+
+​	用于遍历流中的数据
+
+```java
+void forEach(Consumer<? super T> action);
+```
+
+​	该方法接受一个 Consumer 接口，会将每一个流元素交给函数处理。
+
+```java
+ public static void main(String[] args) {
+        Stream.of("a1", "a2", "b3")
+                .forEach(System.out::println);
+    }
+```
+
+### 5.4.2、count
+
+​	用于统计流中元素的个数
+
+```java
+long count();
+```
+
+​	该方法返回一个 long，代表个数。
+
+```java
+public static void main(String[] args) {
+        long count = Stream.of("a1", "a2", "b3").count();
+        System.out.println(count);
+    }
+```
+
+### 5.4.3、filter
+
+​	用于过滤数据，返回符合条件的数据。
+
+![image-20210705112835439](JAVA8.assets/image-20210705112835439.png)
+
+​	通过 filter 方法将一个流转换成另一个子集流。
+
+```java
+Stream<T> filter(Predicate<? super T> predicate);
+```
+
+​	该接口接受一个 Predicate 接口作为筛选条件。
+
+```java
+public static void main(String[] args) {
+        Stream.of("a1", "a2", "b3")
+                .filter(s -> s.contains("a"))
+                .forEach(System.out::println);
+    }
+```
+
+### 5.4.4、limit
+
+​	对流进行截取处理，只取前 N 个数据。
+
+```java
+Stream<T> limit(long maxSize);
+```
+
+![image-20210705113236915](JAVA8.assets/image-20210705113236915.png)
+
+```java
+public static void main(String[] args) {
+        Stream.of("a1", "a2", "b3")
+                .limit(2)
+                .forEach(System.out::println);
+    }
+```
+
+​	如果集合长度大于参数，否则不操作。
+
+### 5.4.5、skip
+
+​	![image-20210705113543316](JAVA8.assets/image-20210705113543316.png)
+
+​	如果期望跳过前面几个元素，可以使用 Skip 跳过。
+
+```java
+Stream<T> skip(long n);
+```
+
+```java
+public static void main(String[] args) {
+        Stream.of("a1", "a2", "b3")
+                .skip(2)
+                .forEach(System.out::println);
+    }
+```
+
+
+
+### 5.4.6、map
+
+​	如果我们需要将流中的元素映射到另一个流中，可以使用 map 方法。
+
+```java
+<R> Stream<R> map(Function<? super T, ? extends R> mapper);
+```
+
+![image-20210705113838898](JAVA8.assets/image-20210705113838898.png)
+
+​	该接口需要一个 Function 接口参数，可以将当前流中的 T 类型转换为 R 类型。
+
+```java
+public static void main(String[] args) {
+        Stream.of("1", "2", "3", "4", "5", "6", "7")
+                .map(Integer::parseInt)
+                .forEach(System.out::println);
+    }
+```
+
+### 5.4.7、sorted
+
+​	将数据排序。
+
+```java
+Stream<T> sorted();
+```
+
+​	使用的时候可以根据自然排序，也可以根据指定的对应排序规则。
+
+```java
+public static void main(String[] args) {
+        Stream.of("1", "3", "2", "0", "11", "6", "4")
+                .map(Integer::parseInt)
+                // 根据数据自然排序
+                .sorted()
+                // 根据比较器排序
+                .sorted((o1, o2) -> o2 - o1)
+                .forEach(System.out::println);
+    }
+```
+
+
+
+### 5.4.8、distinct
+
+​	用于去掉重复数据。
+
+```java
+Stream<T> distinct();
+```
+
+![image-20210705114539219](JAVA8.assets/image-20210705114539219.png)
+
+```java
+public static void main(String[] args) {
+        Stream.of("1", "3", "3", "0", "11", "6", "4")
+                .map(Integer::parseInt)
+                // 根据数据自然排序
+                .sorted()
+                // 根据比较器排序
+                .sorted((o1, o2) -> o2 - o1)
+                // 去掉重复记录
+                .distinct()
+                .forEach(System.out::println);
+        Stream.of(
+                new Person("张三", 18),
+                new Person("李四", 19),
+                new Person("张三", 18)
+        ).distinct()
+                .forEach(System.out::println);
+    }
+```
+
+​	对于基本数据类型是可以直接去重，但是对于自定义类型，需要重写 hashCode 和 equal 方法来进行去重。
+
+### 5.4.9、match
+
+​	用于判断数据是否匹配指定的条件。
+
+```java
+// 任意满足条件
+boolean anyMatch(Predicate<? super T> predicate);
+// 全满足条件
+boolean allMatch(Predicate<? super T> predicate);
+// 不满足条件
+boolean noneMatch(Predicate<? super T> predicate);
+```
+
+```java
+public static void main(String[] args) {
+        System.out.println(Stream.of("1", "3", "3", "3", "11", "6", "4")
+                .map(Integer::parseInt)
+                .allMatch(s -> s > 0));
+        System.out.println(Stream.of("1", "3", "3", "3", "11", "6", "4")
+                .map(Integer::parseInt)
+                .anyMatch(s -> s > 4));
+        System.out.println(Stream.of("1", "3", "3", "3", "11", "6", "4")
+                .map(Integer::parseInt)
+                .noneMatch(s -> s > 4));
+    }
+```
+
+​	注意，Match 是一个终结方法。
+
+### 5.4.10、find
+
+​	用于找到某些元素。
+
+```java
+Optional<T> findFirst();
+Optional<T> findAny();
+```
+
+![image-20210705115557069](JAVA8.assets/image-20210705115557069.png)
+
+```java
+public static void main(String[] args) {
+        Optional<String> first = Stream.of("1", "3", "3", "3", "11", "6", "4")
+                .findFirst();
+        System.out.println(first.get());
+        Optional<String> any = Stream.of("1", "3", "3", "3", "11", "6", "4")
+                .findAny();
+        System.out.println(any.get());
+
+    }
+```
+
+### 5.4.11、max 和 min
+
+​	用于获取元素的最大值和最小值。
+
+![image-20210705120247256](JAVA8.assets/image-20210705120247256.png)
+
+```java
+Optional<T> max(Comparator<? super T> comparator);
+Optional<T> min(Comparator<? super T> comparator);
+```
+
+```java
+public static void main(String[] args) {
+        Optional<Integer> max = Stream.of("1", "3", "3", "4", "5", "1", "7")
+                .map(Integer::parseInt)
+                .max((o1, o2) -> (o1 - o2));
+        System.out.println(max.get());
+
+        Optional<Integer> min = Stream.of("1", "3", "3", "4", "5", "1", "7")
+                .map(Integer::parseInt)
+                .min((o1, o2) -> (o1 - o2));
+        System.out.println(min.get());
+    }
+```
+
+### 5.4.12、reduce 方法
+
+
+
+### 5.4.13、map 和 reduce 组合
+
+
+
+### 5.4.14、mapToInt
+
+
+
+### 5.4.15、concat

@@ -2,6 +2,7 @@ package com.moriaty.jdk.stream;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -23,5 +24,5 @@ public class StreamTest2 {
                 .filter(s -> s.length() == 3)
         .forEach(System.out::println);
 
-    }
+     }
 }
