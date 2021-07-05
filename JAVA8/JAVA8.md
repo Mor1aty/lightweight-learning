@@ -1396,14 +1396,521 @@ public static void main(String[] args) {
 
 ### 5.4.12、reduce 方法
 
+![image-20210705142253796](JAVA8.assets/image-20210705142253796.png)
 
+​	如果需要将所有数据归纳得到一个数据，那么可以使用这个 reduce 方法
+
+```java
+T reduce(T identity, BinaryOperator<T> accumulator);
+```
+
+```java
+public static void main(String[] args) {
+        Integer total = Stream.of(4, 5, 3, 9)
+                // identity 默认值
+                // 第一次会将默认值赋值给 x
+                // 之后每一次都会将上一次操作结果赋值给 x, y 是每次从数据中获取的元素
+                .reduce(0, (x, y) -> {
+                    System.out.println("x=" + x + ", y=" + y);
+                    return x + y;
+                });
+        System.out.println(total);
+
+        Integer max = Stream.of(4, 5, 3, 9)
+                .reduce(0, (x, y) ->
+                        x > y ? x : y
+                );
+        System.out.println(max);
+    }
+```
 
 ### 5.4.13、map 和 reduce 组合
 
+```java
+public static void main(String[] args) {
+        // 求出所有年龄的总和
+        Integer sumAge = Stream.of(
+                new Person("张三", 18),
+                new Person("李四", 22),
+                new Person("王五", 13),
+                new Person("赵柳", 15),
+                new Person("周期", 19))
+                // 实现类型转换
+                .map(Person::getAge)
+                .reduce(0, Integer::sum);
+        System.out.println(sumAge);
 
+        // 求出所有年龄中的最大值
+        Integer maxAge = Stream.of(
+                new Person("张三", 18),
+                new Person("李四", 22),
+                new Person("王五", 13),
+                new Person("赵柳", 15),
+                new Person("周期", 19))
+                .map(Person::getAge)
+                .reduce(0, Math::max);
+        System.out.println(maxAge);
+
+        // 统计字符 a 出现的次数
+        Integer count = Stream.of("a", "a", "c", "d", "a", "c", "a")
+                .map(ch -> "a".equals(ch) ? 1 : 0)
+                .reduce(0, Integer::sum);
+        System.out.println(count);
+    }
+```
 
 ### 5.4.14、mapToInt
 
+​	
 
+```java
+public static void main(String[] args) {
+    // Integer 占用的内存比 int 多，在 Stream 流操作中会自动装箱和拆箱操作
+    Integer[] arr = {1, 2, 3, 4, 5, 6, 7};
+    Stream.of(arr)
+            .filter(i -> i > 0)
+            .forEach(System.out::println);
+    // 为了提高效率，可以将流中的 Integer 转化为 int
+    IntStream intStream = Stream.of(arr).mapToInt(Integer::intValue);
+    intStream.filter(i -> i > 3)
+            .forEach(System.out::println);
+}
+```
 
 ### 5.4.15、concat
+
+​	如果有两个流希望合并成为一个流，可以使用 Stream 接口的静态方法 concat
+
+```java
+public static void main(String[] args) {
+        Stream<String> stream1 = Stream.of("a", "b", "c");
+        Stream<String> stream2 = Stream.of("x", "y", "z");
+        Stream.concat(stream1, stream2)
+                .forEach(System.out::println);
+    }
+```
+
+### 5.4.16、综合案例
+
+​	定义两个集合，然后在集合中存储多个用户名称，然后完成以下操作：
+
+1. 第一个队伍只保留姓名长度为 3 的成员
+2. 第一个队伍筛选之后只要前 3 个人
+3. 第二个队伍只要姓张的队员
+4. 第二个队伍筛选之后不要前两个人
+5. 将两个队伍合并成一个
+6. 根据姓名创建 Person 对象
+7. 打印这个队伍的 Person 信息
+
+```java
+ public static void main(String[] args) {
+        List<String> list1 = Arrays.asList("迪丽热巴", "宋远桥", "苏星河", "老子", "庄子", "孙子", "洪七 公");
+        List<String> list2 = Arrays.asList("古力娜扎", "张无忌", "张三丰", "赵丽颖", "张二狗", "张天爱", "张三");
+
+        // 1. 第一个队伍只保留姓名长度为 3 的成员
+        // 2. 第一个队伍筛选之后只要前 3 个人
+        Stream<String> stream1 = list1.stream()
+                .filter(s -> s.length() == 3)
+                .limit(3);
+
+        // 3. 第二个队伍只要姓张的队员
+        // 4. 第二个队伍筛选之后不要前两个人
+        Stream<String> stream2 = list2.stream()
+                .filter(s -> s.startsWith("张"))
+                .skip(2);
+
+        // 5. 将两个队伍合并成一个
+        // 6. 根据姓名创建 Person 对象
+        // 7. 打印这个队伍的 Person 信息
+        Stream.concat(stream1, stream2)
+                .map(Person::new)
+                .forEach(System.out::println);
+    }
+```
+
+## 5.5、Stream 结果收集
+
+### 5.5.1、收集到集合
+
+```java
+public static void main(String[] args) {
+        List<String> list = Stream.of("aa", "bb", "cc", "aa")
+                .collect(Collectors.toList());
+        System.out.println(list);
+
+        Set<String> set = Stream.of("aa", "bb", "cc", "aa")
+                .collect(Collectors.toSet());
+        System.out.println(set);
+
+        ArrayList<String> arrayList = Stream.of("aa", "bb", "cc", "aa")
+                .collect(Collectors.toCollection(ArrayList::new));
+        System.out.println(arrayList);
+
+        HashSet<String> hashSet = Stream.of("aa", "bb", "cc", "aa")
+                .collect(Collectors.toCollection(HashSet::new));
+        System.out.println(hashSet);
+    }
+```
+
+
+
+### 5.5.2、收集到数组
+
+```java
+public static void main(String[] args) {
+        Object[] objects = Stream.of("aa", "bb", "cc", "aa")
+                .toArray();
+        System.out.println(Arrays.toString(objects));
+
+        String[] strings = Stream.of("aa", "bb", "cc", "aa")
+                .toArray(String[]::new);
+        System.out.println(Arrays.toString(strings));
+
+    }
+```
+
+### 5.5.3、对流中的数据做聚合计算
+
+​	当使用 Stream 流处理数据后，可以像数据库的聚合函数一样对某个字段进行操作，比如获得最大值，求和等。
+
+```java
+public static void main(String[] args) {
+        // 获取年龄的最大值
+        Optional<Person> maxAge = Stream.of(
+                new Person("张三", 18),
+                new Person("李四", 22),
+                new Person("王五", 13),
+                new Person("赵柳", 15),
+                new Person("周期", 19))
+                .collect(Collectors.maxBy((p1, p2) -> p1.getAge() - p2.getAge()));
+        System.out.println(maxAge.get());
+
+        Optional<Person> minAge = Stream.of(
+                new Person("张三", 18),
+                new Person("李四", 22),
+                new Person("王五", 13),
+                new Person("赵柳", 15),
+                new Person("周期", 19))
+                .collect(Collectors.minBy((p1, p2) -> p1.getAge() - p2.getAge()));
+        System.out.println(minAge.get());
+
+        Integer sumAge = Stream.of(
+                new Person("张三", 18),
+                new Person("李四", 22),
+                new Person("王五", 13),
+                new Person("赵柳", 15),
+                new Person("周期", 19))
+                .collect(Collectors.summingInt(s -> s.getAge()));
+        System.out.println(sumAge);
+
+        Double avgAge = Stream.of(
+                new Person("张三", 18),
+                new Person("李四", 22),
+                new Person("王五", 13),
+                new Person("赵柳", 15),
+                new Person("周期", 19))
+                .collect(Collectors.averagingInt(Person::getAge));
+        System.out.println(avgAge);
+
+        Long count = Stream.of(
+                new Person("张三", 18),
+                new Person("李四", 22),
+                new Person("王五", 13),
+                new Person("赵柳", 15),
+                new Person("周期", 19))
+                .collect(Collectors.counting());
+        System.out.println(count);
+    }
+```
+
+### 5.5.4、对流中的数据做分组操作
+
+```java
+public static void main(String[] args) {
+        Map<String, List<Person>> map1 = Stream.of(
+                new Person("张三", 18, 175),
+                new Person("李四", 22, 177),
+                new Person("张三", 18, 165),
+                new Person("李四", 15, 166),
+                new Person("张三", 19, 182))
+                .collect(Collectors.groupingBy(Person::getName));
+        map1.forEach((k, v) -> System.out.println(k + ":" + v));
+
+        // 根据年龄分组
+        Map<String, List<Person>> map2 = Stream.of(
+                new Person("张三", 18, 175),
+                new Person("李四", 22, 177),
+                new Person("张三", 18, 165),
+                new Person("李四", 15, 166),
+                new Person("张三", 19, 182))
+                .collect(Collectors.groupingBy(p -> p.getAge() >= 18 ? "成年" : "未成年"));
+        map2.forEach((k, v) -> System.out.println(k + ":" + v));
+
+    }
+```
+
+### 5.5.5、多级分组
+
+```java
+public static void main(String[] args) {
+        Map<String, Map<String, List<Person>>> map1 = Stream.of(
+                new Person("张三", 18, 175),
+                new Person("李四", 22, 177),
+                new Person("张三", 18, 165),
+                new Person("李四", 15, 166),
+                new Person("张三", 19, 182))
+                .collect(Collectors.groupingBy(Person::getName,
+                        Collectors.groupingBy(p -> p.getAge() >= 18 ? "成年" : "未成年")));
+        map1.forEach((k, v) -> {
+            System.out.println(k + ":");
+            v.forEach((kk, vv) -> System.out.println("  " + kk + "=" + vv));
+        });
+    }
+```
+
+### 5.5.6、分区操作
+
+Collectors.partitioningBy 会根据值是否为 true，把集合中的数据分为两个列表，一个为 true 列表，一个为 false 列表。
+
+```java
+public static void main(String[] args) {
+        Map<Boolean, List<Person>> map = Stream.of(
+                new Person("张三", 18, 175),
+                new Person("李四", 22, 177),
+                new Person("张三", 18, 165),
+                new Person("李四", 15, 166),
+                new Person("张三", 19, 182))
+                .collect(Collectors.partitioningBy(p -> p.getAge() > 18));
+        map.forEach((k, v) -> System.out.println(k + "=" + v));
+    }
+```
+
+### 5.5.7、拼接操作
+
+Collectors.joining 会根据指定的字符，将数据拼接成一个字符串。
+
+```java
+public static void main(String[] args) {
+        String s1 = Stream.of(
+                new Person("张三", 18, 175),
+                new Person("李四", 22, 177),
+                new Person("张三", 18, 165),
+                new Person("李四", 15, 166),
+                new Person("张三", 19, 182))
+                .map(Person::getName)
+                .collect(Collectors.joining());
+        System.out.println(s1);
+
+        String s2 = Stream.of(
+                new Person("张三", 18, 175),
+                new Person("李四", 22, 177),
+                new Person("张三", 18, 165),
+                new Person("李四", 15, 166),
+                new Person("张三", 19, 182))
+                .map(Person::getName)
+                .collect(Collectors.joining("_"));
+        System.out.println(s2);
+
+        String s3 = Stream.of(
+                new Person("张三", 18, 175),
+                new Person("李四", 22, 177),
+                new Person("张三", 18, 165),
+                new Person("李四", 15, 166),
+                new Person("张三", 19, 182))
+                .map(Person::getName)
+                .collect(Collectors.joining("_", "###","$$$"));
+        System.out.println(s3);
+    }
+```
+
+## 5.6、并行的 Stream 流
+
+### 5.6.1、串行的 Stream 流
+
+​	在一个线程上面执行的流
+
+```java
+public static void main(String[] args) {
+        // 串行流
+        System.out.println(Stream.of(5, 6, 8, 10, 2)
+                .filter(s -> {
+                    System.out.println(Thread.currentThread().getName() + ":" + s);
+                    return s > 3;
+                })
+                .count());
+    }
+```
+
+### 5.6.2、并行流
+
+​	parallelStream 其实就是一个并行执行的流，他通过默认的 ForkJoinPool，可以提高多线程任务的速度。
+
+- 获取并行流
+
+```java
+List<Integer> list = new ArrayList<>();
+        // 通过 list 接口直接获取并行流
+        Stream<Integer> integerStream = list.parallelStream();
+        // 将已有的串行流转化为并行流
+        Stream<Integer> parallel = Stream.of(1, 2, 3).parallel();
+        
+```
+
+- 操作
+
+```java
+System.out.println(Stream.of(1, 4, 2, 6, 1, 5)
+                .parallel()
+                .filter(s -> {
+                    System.out.println(Thread.currentThread().getName() + ":" + s);
+                    return s > 2;
+                }).count());
+```
+
+### 5.6.3、并行流和串行流对比
+
+​	数据量大的情况下，并行流有有优势。
+
+```java
+public static void main(String[] args) {
+        long times = 500000000;
+
+        System.out.println("普通 for 循环");
+        long start = System.currentTimeMillis();
+        System.out.println(start);
+        long res = 0;
+        for (int i = 0; i < times; i++) {
+            res += i;
+        }
+        System.out.println(res);
+        System.out.println(System.currentTimeMillis() - start);
+
+
+        System.out.println("串行流 for 循环");
+        LongStream longStream = LongStream.rangeClosed(0, times);
+        start = System.currentTimeMillis();
+        System.out.println(longStream.reduce(0, Long::sum));
+        System.out.println(System.currentTimeMillis() - start);
+
+        System.out.println("并行流 for 循环");
+        longStream = LongStream.rangeClosed(0, times);
+        start = System.currentTimeMillis();
+        System.out.println(start);
+        System.out.println(longStream.parallel().reduce(0, Long::sum));
+        System.out.println(System.currentTimeMillis() - start);
+
+    }
+```
+
+### 5.6.4、线程安全问题
+
+​	多线程的情况下会出现线程安全问题。
+
+```java
+public static void main(String[] args) {
+        // 并行流中的数据安全问题
+        List<Integer> list = new ArrayList<>();
+        for (int i = 0; i < 1000; i++) {
+            list.add(i);
+        }
+        System.out.println(list.size());
+
+        // 使用并行流向集合中添加数据
+        List<Integer> newList = new ArrayList<>();
+        list.parallelStream().forEach(newList::add);
+        System.out.println(newList.size());
+    }
+```
+
+​	针对数据安全问题，我们的解决方案有哪些呢？
+
+1. 加同步锁
+
+2. 使用线程安全的容器
+
+3. 将容器包装为线程安全的容器
+
+   `Collections.synchronizedList()`
+
+4. 通过 Stream 中的 toArray 或者 collect 进行操作
+
+## 5.7、Fork/Join 框架
+
+​	parallelStream 使用的是 Fork/Join 框架，框架自 JDK1.7 引入。Fork/Join 框架可以将一个大任务拆分成很多小任务来异步执行。
+
+Fork/Join 框架主要有三个模块：
+
+1. 线程池：ForkJoinPool
+2. 任务对象：ForkJoinTask
+3. 执行任务的线程：ForkJoinWorkerThread
+
+![image-20210705193925522](JAVA8.assets/image-20210705193925522.png)
+
+### 5.7.1、Fork/Join 原理：分治法
+
+​	ForkJoinPool 主要用分治法来解决问题、典型的应用比如快速排序算法，ForkJoinPool 需要使用相对较少的线程来处理大量的任务。比如对于 1000 万个数据进行排序，会将这个任务分割成两个500 万的任务和针对这两个任务的合并任务。
+
+![image-20210705194205798](JAVA8.assets/image-20210705194205798.png)
+
+### 5.7.2、Fork/Join 原理：工作窃取算法
+
+​	Fork/Join 工作窃取算法指的是某个线程从其他任务队列里窃取任务来执行。
+
+![image-20210705194446759](JAVA8.assets/image-20210705194446759.png)
+
+### 5.7.3、Fork/Join 案例
+
+​	使用 Fork/Join 计算 1-10000 的和，当一个任务的计算数量大于 3000 的时候拆分任务，数量小于 3000 就进行计算。
+
+![image-20210705194736834](JAVA8.assets/image-20210705194736834.png)
+
+```java
+public class StreamTest32ForkJoin {
+    public static void main(String[] args) {
+        ForkJoinPool pool = new ForkJoinPool();
+        SumRecursiveTask task = new SumRecursiveTask(1, 10000L);
+        Long result = pool.invoke(task);
+        System.out.println("result=" + result);
+    }
+}
+
+class SumRecursiveTask extends RecursiveTask<Long> {
+
+    /**
+     * 拆分的临界值
+     */
+    private static final long THRESHOLD = 3000L;
+
+    private final long start;
+
+    private final long end;
+
+    public SumRecursiveTask(long start, long end) {
+        this.start = start;
+        this.end = end;
+    }
+
+    @Override
+    protected Long compute() {
+        long length = end - start;
+        if (length <= THRESHOLD) {
+            // 任务无需拆分
+            long sum = 0;
+            for (long i = start; i <= end; i++) {
+                sum += i;
+            }
+            System.out.println("计算：" + start + "-->" + end + ", 的结果为：" + sum);
+            return sum;
+        } else {
+            long middle = (start + end) / 2;
+            System.out.println("拆分：左边 " + start + "-->右边：" + end);
+            SumRecursiveTask left = new SumRecursiveTask(start, middle);
+            left.fork();
+            SumRecursiveTask right = new SumRecursiveTask(middle + 1, end);
+            right.fork();
+            return left.join() + right.join();
+        }
+    }
+}
+```
+
