@@ -1914,3 +1914,367 @@ class SumRecursiveTask extends RecursiveTask<Long> {
 }
 ```
 
+# 六、Optional
+
+​	Optional 是用来解决空指针的问题
+
+## 6.1、以前解决 null 的方法
+
+```java
+public static void main(String[] args) {
+        String username = "张三";
+        if (username != null) {
+            System.out.println(username.length());
+        } else {
+            System.out.println("空");
+        }
+    }
+```
+
+## 6.2、Optional 类
+
+​	Optional 是 final，是一个没有子类的工具类，是一个可以为 null 的容器对象，他的主要作用就是为了避免 Null 检查，防止 NullPointerException。
+
+## 6.3、基本使用
+
+​	创建方式：
+
+```java
+ public static void main(String[] args) {
+        // of 方法不支持传入 null
+        Optional<String> op1 = Optional.of("张三");
+        Optional<Object> op2 = Optional.of(null);
+
+        // ofNullable 支持 null
+        Optional<String> op3 = Optional.ofNullable("lisi");
+        Optional<Object> op4 = Optional.ofNullable(null);
+
+        // empty 直接创建空对象
+        Optional<Object> op5 = Optional.empty();
+    }
+```
+
+​	常用方法：
+
+```java
+public static void main(String[] args) {
+        Optional<String> op1 = Optional.of("张三");
+        Optional<String> op2 = Optional.empty();
+
+        /*
+         获取 Optional 的值：get()
+         */
+        System.out.println(op1.get());
+        // get 方法没有值会抛出 NoSuchElementException 异常
+
+        /*
+         判断是否有值：isPresent()
+         */
+        if (op2.isPresent()) {
+            System.out.println("空");
+        }
+
+        /*
+        赋予默认值：orElse()
+        如果是空值，则返回 orElse 的值
+         */
+        System.out.println(op2.orElse("王五"));
+
+        /*
+        orElseGet()
+        与 orElse() 方法类似
+         */
+        System.out.println(op2.orElseGet(() -> "hello"));
+
+    }
+```
+
+​	高级用法：
+
+```java
+public class OptionalTest03 {
+    public static void main(String[] args) {
+        Optional<String> op1 = Optional.of("张三");
+        Optional<String> op2 = Optional.empty();
+
+        /*
+        ifPresent
+         如果存在值，就做什么
+         */
+        op1.ifPresent(System.out::println);
+
+        /*
+        自定义一个方法，将 Person 对象中的 name 转换为大写，并返回
+         */
+        Person p = new Person("zhansan", 18);
+        Optional<Person> op = Optional.of(p);
+        System.out.println(getName(p));
+        System.out.println(getNameForOptional(op));
+
+    }
+
+    private static String getNameForOptional(Optional<Person> op) {
+        String res = null;
+        if (op.isPresent()) {
+            return op.map(Person::getName)
+                    .map(String::toUpperCase)
+                    .orElse(null);
+        }
+        return res;
+    }
+
+    private static String getName(Person person) {
+        if (person != null) {
+            String name = person.getName();
+            if (name != null) {
+                return name.toUpperCase(Locale.ROOT);
+            } else {
+                return null;
+            }
+        } else {
+            return null;
+        }
+    }
+}
+```
+
+# 七、新时间日期 API
+
+## 7.1、旧版日期时间的问题
+
+​	在旧版本中，JDK 对于日期时间的设计是不好的。
+
+```java
+public static void main(String[] args) throws ParseException {
+        /*
+        旧版日期时间存在的问题
+         */
+        // 1、设计不合理
+        Date date = new Date(2021,07, 06);
+        System.out.println(date);
+
+        // 2、时间格式化
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        System.out.println(sdf.format(date));
+        System.out.println(sdf.parse("2021-05-06"));
+
+        // 3、多线程的情况下会存在数据安全问题
+        for (int i = 0; i < 50; i++) {
+            new Thread(()-> {
+                try {
+                    System.out.println(sdf.parse("2021-05-06"));
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                }
+            }).start();
+        }
+    
+    	// 4、存在时区问题
+    }
+```
+
+## 7.2、新日期时间 API 介绍
+
+​	JDK8 增加了一套全新的日期时间 API，是线程安全的，下面是一些关键类：
+
+- LocalDate：表示日期，格式 2021-07-06
+- LocalTime：表示时间，格式 11:36:14.154234300
+- LocalDateTime：表示日期时间，格式 2021-07-06T11:36:14.154
+- DateTimeFormatter：日期时间格式化类
+- Instant：时间戳
+- Duration：用于计算两个时间（LocalTime）的距离
+- Period：用户计算连个日期（LocalDate）的距离
+- ZoneDateTime：包含时区的时间
+
+​	Java 使用的历法是 ISO 8601 日历系统，也就是公历，此外 JDK 还提供了 4 套其他历法，分别是：
+
+- ThaiBuddhistDate：泰国佛教历
+- MinguoDate：中华民国历
+- JapaneseDate：日本历
+- HijrahDate：伊斯兰历
+
+### 7.2.1、常见操作
+
+```java
+public static void main(String[] args) {
+
+        // 创建指定的日期
+        System.out.println(LocalDate.of(2021, 7, 1));
+
+        // 获取当前日期
+        System.out.println(LocalDate.now());
+
+        // 根据 LocalDate 对象获取对应的日期信息
+        LocalDate now = LocalDate.now();
+        System.out.println(now.getYear());
+        System.out.println(now.getMonth());
+        System.out.println(now.getMonth().getValue());
+        System.out.println(now.getDayOfMonth());
+        System.out.println(now.getDayOfWeek().getValue());
+
+        // 得到指定的时间
+        System.out.println(LocalTime.of(5, 26, 33, 122));
+
+        // 获取当前时间
+        System.out.println(LocalTime.now());
+
+        // 获取时间信息
+        LocalTime now1 = LocalTime.now();
+        System.out.println(now1.getHour());
+        System.out.println(now1.getMinute());
+        System.out.println(now1.getSecond());
+        System.out.println(now1.getNano());
+
+        // 获取指定的日期时间
+        System.out.println(LocalDateTime.of(
+                2021,
+                6,
+                12,
+                12,
+                32,
+                33,
+                123));
+
+        // 获取当前日期时间
+        System.out.println(LocalDateTime.now());
+
+        // 获取日期时间信息
+        LocalDateTime now2 = LocalDateTime.now();
+        System.out.println(now2.getYear());
+        System.out.println(now2.getHour());
+    }
+```
+
+### 7.2.2、日期时间的修改和比较
+
+```java
+public static void main(String[] args) {
+
+        LocalDateTime now = LocalDateTime.now();
+
+        // 修改日期时间
+        // 会创建一个新的 LocalDateTime，并不会修改原来的信息
+        System.out.println(now);
+        System.out.println(now.withYear(1998));
+
+        // 在当前日期时间的基础上，加上或者减去指定时间
+        System.out.println(now.plusDays(2));
+        System.out.println(now.minusDays(2));
+
+        // 比较日期
+        LocalDate now1 = LocalDate.now();
+        LocalDate date = LocalDate.of(2020, 1, 3);
+        System.out.println(now1.isAfter(date));
+        System.out.println(now1.isBefore(date));
+        System.out.println(now1.isEqual(date));
+    }
+```
+
+### 7.2.3、格式化和解析操作
+
+​	在 JDK8 中可以用过 `java.time.format.DateTimeFormatter` 来进行日期时间操作。
+
+```java
+public static void main(String[] args) {
+
+        // 格式化
+        LocalDateTime now = LocalDateTime.now();
+        DateTimeFormatter df = DateTimeFormatter.ofPattern("yyy-MM-dd HH:mm:ss");
+        System.out.println(now.format(df));
+
+        // 字符串解析
+        String s = "2020-10-11 22:11:12";
+        System.out.println(LocalDateTime.parse(s, df));
+    }
+```
+
+### 7.2.4、Instant 类
+
+​	Instant 保存了从  1970 年 1 月 1 日 0:00:00 至今的的秒和纳秒
+
+```java
+public static void main(String[] args) throws InterruptedException {
+        Instant now = Instant.now();
+        System.out.println(now);
+
+        // 获取纳秒数据
+        System.out.println(now.getNano());
+        Thread.sleep(5);
+        System.out.println((Instant.now().getNano() - now.getNano()));
+
+    }
+```
+
+### 7.2.5、计算日期时间差
+
+​	JDK8 提供了两个工具类 Duration/Period
+
+1. Duration 计算时间差
+2. Period 计算日期差
+
+```java
+ public static void main(String[] args) throws InterruptedException {
+        // 计算时间差
+        LocalTime now = LocalTime.now();
+        LocalTime time = LocalTime.of(22, 48, 55);
+
+        Duration duration = Duration.between(now, time);
+        System.out.println(duration.toDays());
+        System.out.println(duration.toHours());
+        System.out.println(duration.toMinutes());
+
+        // 计算日期差
+        LocalDate now1 = LocalDate.now();
+        LocalDate date = LocalDate.of(2020, 1, 1);
+        Period period = Period.between(date, now1);
+        System.out.println(period.getYears());
+        System.out.println(period.getMonths());
+    }
+```
+
+### 7.2.6、时间矫正器
+
+​	有时候我们需要获取如下调整：将日期调整到下个月的第一天
+
+```java
+public static void main(String[] args) {
+        LocalDate now = LocalDate.now();
+        // 将当前日期调整到下个月的一号
+        TemporalAdjuster adjuster = (temporal) -> {
+            LocalDate date = (LocalDate) temporal;
+            return date.plusMonths(1).withDayOfMonth(1);
+        };
+        System.out.println(now.with(adjuster));
+
+        // 使用封装好的
+        System.out.println(now.with(TemporalAdjusters.firstDayOfNextMonth()));
+    }
+```
+
+### 7.2.7、时区
+
+​	LocalDate，LocalTime，LocalDateTime 是不带时区的，只有 Zone* 是带时区的。
+
+```java
+public static void main(String[] args) {
+        // 获取所有时区 id
+        ZoneId.getAvailableZoneIds().forEach(System.out::println);
+
+        // 获取当前时间
+        LocalDateTime now = LocalDateTime.now();
+        System.out.println(now);
+
+        // 获取标准时间
+        ZonedDateTime bz = ZonedDateTime.now(Clock.systemUTC());
+        System.out.println(bz);
+
+        // 获取当前使用计算机默认的时区
+        ZonedDateTime now1 = ZonedDateTime.now();
+        System.out.println(now1);
+
+        // 使用指定时区
+        ZonedDateTime now2 = ZonedDateTime.now(ZoneId.of("Pacific/Majuro"));
+        System.out.println(now2);
+    }
+```
+
