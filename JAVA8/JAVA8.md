@@ -2278,3 +2278,80 @@ public static void main(String[] args) {
     }
 ```
 
+# 八、其他特性
+
+## 8.1、重复注解
+
+​	@Repeatable
+
+```java
+@Retention(RetentionPolicy.RUNTIME)
+public @interface MyAnnotations {
+
+    MyAnnotation[] value();
+}
+```
+
+```java
+@Repeatable(MyAnnotations.class)
+@Retention(RetentionPolicy.RUNTIME)
+public @interface MyAnnotation {
+    String value();
+}
+```
+
+```java
+@MyAnnotation("t1")
+@MyAnnotation("t2")
+@MyAnnotation("t3")
+public class AnnoTest {
+    public static void main(String[] args) {
+        // 解析重复注解
+        MyAnnotation[] annotationsByType = AnnoTest.class.getAnnotationsByType(MyAnnotation.class);
+        for (MyAnnotation myAnnotation : annotationsByType) {
+            System.out.println(myAnnotation.value());
+        }
+    }
+}
+```
+
+## 8.2、类型注解
+
+​	JDK8 为 @Target 元注解新增了两种类型：TYPE_PARAMETER，TYPE_USE。
+
+- TYPE_PARAMETER：表示该注解能写在类型参数的声明语句，类型参数声明如：<T>
+- TYPE_USE：表示注解可以在任何用到类型的地方使用。
+
+TYPE_PARAMETER：
+
+```java
+@Target(ElementType.TYPE_PARAMETER)
+public @interface TypeParam {
+}
+```
+
+```java
+public class TypeDemo01<@TypeParam T> {
+    public <@TypeParam K extends Object> K test01() {
+        return null;
+    }
+}
+```
+
+TYPE_USE：
+
+```java
+@Target(ElementType.TYPE_USE)
+public @interface NotNull {
+}
+```
+
+```java
+public class TypeUseDemo {
+    public @NotNull Integer age = 10;
+    public Integer sum(@NotNull Integer a, @NotNull Integer b) {
+        return a + b;
+    }
+}
+```
+
